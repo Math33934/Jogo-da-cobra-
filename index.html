@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<title>Snake Game PRO — Ultimate Edition</title>
+<style>
+:root{--bg:#0b1220;--panel:#172338;--panel2:#20314b;--green:#35df83;--text:#f4f7fb;--muted:#9aabc1;--gold:#f6c453;--red:#fb6575}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(circle at top,#172b40,var(--bg) 58%);color:var(--text);font-family:Inter,Arial,sans-serif;padding:22px}
+button,input,select{font:inherit}
+button{border:0;border-radius:10px;padding:11px 15px;background:var(--green);color:#062416;font-weight:800;cursor:pointer;transition:.15s}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button.secondary{background:#334761;color:white}
+button.gold{background:var(--gold);color:#332300}
+button.danger{background:#713744;color:white}
+input,select{background:#0d192a;border:1px solid #40536c;color:white;border-radius:9px;padding:10px;min-width:0}
+.app{max-width:1120px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 20px;flex-wrap:wrap}
+.brand h1{font-size:clamp(25px,4vw,36px);color:var(--green)}
+.brand p{color:var(--muted);margin-top:5px;font-size:13px}
+.wallet{display:flex;gap:10px;flex-wrap:wrap}
+.pill{background:var(--panel);border:1px solid #2c405b;padding:10px 14px;border-radius:12px;font-weight:800}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr);gap:18px;align-items:start}
+.panel{background:rgba(23,35,56,.96);border:1px solid #2b405d;border-radius:17px;padding:16px;box-shadow:0 14px 35px #0003}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#0d192a;border-radius:11px;padding:10px;text-align:center}
+.stat small{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.stat strong{font-size:20px}
+canvas{display:block;width:min(100%,560px);height:auto;aspect-ratio:1;margin:auto;background:#101e30;border:2px solid #35516c;border-radius:12px;touch-action:none}
+.game-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hint{text-align:center;color:var(--muted);font-size:12px;margin-top:12px;line-height:1.6}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.tab{background:#263b55;color:#dce8f5;padding:9px 11px;font-size:12px}
+.tab.active{background:var(--green);color:#062416}
+.view{display:none}.view.active{display:block}
+h2{font-size:19px;margin-bottom:12px}
+h3{font-size:14px;margin:13px 0 8px;color:#d9e6f5}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stack{display:grid;gap:9px}
+.card{background:#0d192a;border:1px solid #2b405d;border-radius:12px;padding:12px}
+.card p{font-size:12px;color:var(--muted);line-height:1.45;margin-top:5px}
+.card strong{font-size:14px}
+.list{display:grid;gap:8px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0d192a;border-radius:10px;padding:10px}
+.item .desc{min-width:0}.item small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.item button{padding:8px 10px;font-size:12px;white-space:nowrap}
+.progress{height:7px;background:#263b55;border-radius:20px;overflow:hidden;margin-top:8px}
+.progress span{display:block;height:100%;background:var(--green);width:0}
+.badge{font-size:22px;width:38px;text-align:center}
+.locked{opacity:.48}
+.overlay{position:fixed;inset:0;z-index:10;background:#020817eF;display:flex;align-items:center;justify-content:center;padding:18px}
+.overlay.hidden{display:none}
+.modal{max-width:410px;width:100%;background:#172338;border:1px solid #3a526f;border-radius:18px;padding:26px;text-align:center}
+.modal h2{color:var(--green);font-size:25px}
+.modal p{color:var(--muted);line-height:1.5;margin:10px 0 18px}
+.modal .actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#e7f9ef;color:#07351d;padding:11px 17px;border-radius:12px;font-weight:800;font-size:13px;box-shadow:0 8px 30px #0006;z-index:30;opacity:0;pointer-events:none;transition:.2s}
+#toast.show{opacity:1}
+select{width:100%}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.settings-grid label{font-size:12px;color:var(--muted);display:grid;gap:5px}
+.empty{color:var(--muted);font-size:13px;padding:14px;text-align:center}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.panel.side{order:2}}
+@media(max-width:520px){body{padding:12px}.panel{padding:12px}.stats{grid-template-columns:repeat(4,1fr);gap:5px}.stat{padding:8px 3px}.stat strong{font-size:17px}.stat small{font-size:9px}.game-actions button{flex:1;padding:10px 7px;font-size:12px}.settings-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><h1>🐍 Snake Game PRO</h1><p>ULTIMATE EDITION · Evolua, conquiste e personalize</p></div>
+  <div class="wallet"><div class="pill">🪙 <span id="coins">0</span></div><div class="pill">🏆 Nível <span id="profileLevel">1</span></div></div>
+</header>
+
+<div class="layout">
+<section class="panel">
+  <div class="stats">
+    <div class="stat"><small>PONTOS</small><strong id="score">0</strong></div>
+    <div class="stat"><small>RECORDE</small><strong id="best">0</strong></div>
+    <div class="stat"><small>FASE</small><strong id="stage">Livre</strong></div>
+    <div class="stat"><small>MOEDAS</small><strong id="runCoins">0</strong></div>
+  </div>
+  <canvas id="game" width="500" height="500" aria-label="Área do jogo Snake"></canvas>
+  <div class="game-actions">
+    <button id="startBtn">▶ Iniciar</button>
+    <button class="secondary" id="pauseBtn">Ⅱ Pausar</button>
+    <button class="secondary" id="restartBtn">↻ Reiniciar</button>
+  </div>
+  <p class="hint">Setas ou WASD para mover · P para pausar · R para reiniciar<br>Celular: deslize sobre o tabuleiro ou use os controles direcionais.</p>
+  <div class="game-actions" aria-label="Controles para celular">
+    <button class="secondary" data-dir="up">⬆</button>
+    <button class="secondary" data-dir="left">⬅</button>
+    <button class="secondary" data-dir="down">⬇</button>
+    <button class="secondary" data-dir="right">➡</button>
+  </div>
+  <div class="card" style="margin-top:13px">
+    <div class="row"><strong>✨ Efeitos ativos</strong><span class="muted" id="effects">Nenhum</span></div>
+    <div class="progress"><span id="effectBar"></span></div>
+  </div>
+</section>
+
+<aside class="panel side">
+  <nav class="tabs">
+    <button class="tab active" data-tab="missions">Missões</button>
+    <button class="tab" data-tab="shop">Loja</button>
+    <button class="tab" data-tab="campaign">Campanha</button>
+    <button class="tab" data-tab="achievements">Medalhas</button>
+    <button class="tab" data-tab="ranking">Ranking</button>
+    <button class="tab" data-tab="settings">Opções</button>
+  </nav>
+
+  <section class="view active" id="missions">
+    <h2>📅 Missões diárias</h2><p class="muted">Complete objetivos para receber moedas. As missões renovam conforme a data local.</p>
+    <div class="list" id="missionList"></div>
+  </section>
+
+  <section class="view" id="shop">
+    <h2>🎨 Loja de skins</h2><p class="muted">Compre visuais permanentes e equipe sua cobra.</p>
+    <div class="list" id="skinList"></div>
+    <h3>⚡ Melhorias consumíveis</h3>
+    <div class="list" id="powerShop"></div>
+  </section>
+
+  <section class="view" id="campaign">
+    <h2>🗺️ Modo campanha</h2><p class="muted">Supere fases com metas de coleta e dificuldade crescente.</p>
+    <div class="card" id="campaignInfo"></div>
+    <div class="game-actions"><button id="campaignBtn">Jogar campanha</button></div>
+  </section>
+
+  <section class="view" id="achievements">
+    <h2>🏅 Conquistas</h2><p class="muted">Desbloqueie medalhas cumprindo desafios.</p>
+    <div class="list" id="achievementList"></div>
+  </section>
+
+  <section class="view" id="ranking">
+    <h2>🥇 Ranking local</h2>
+    <label class="muted" for="playerName">Nome no ranking</label>
+    <div class="row" style="margin:7px 0 12px"><input id="playerName" maxlength="16" placeholder="Seu nome"><button id="saveName">Salvar</button></div>
+    <div class="list" id="rankingList"></div>
+    <p class="muted" style="margin-top:10px">As pontuações ficam salvas somente neste navegador.</p>
+  </section>
+
+  <section class="view" id="settings">
+    <h2>⚙️ Configurações</h2>
+    <div class="settings-grid">
+      <label>Dificuldade<select id="difficulty"><option value="easy">Fácil</option><option value="normal" selected>Normal</option><option value="hard">Difícil</option></select></label>
+      <label>Modo de colisão<select id="wallMode"><option value="solid">Paredes sólidas</option><option value="wrap">Atravessar paredes</option></select></label>
+      <label>Áudio<select id="soundMode"><option value="on">Ligado</option><option value="off">Desligado</option></select></label>
+      <label>Modo de jogo<select id="gameMode"><option value="endless">Infinito</option><option value="campaign">Campanha</option></select></label>
+    </div>
+    <p class="muted" style="margin-top:12px">As configurações são salvas automaticamente.</p>
+    <h3>Dados locais</h3><button class="danger" id="resetData">Apagar progresso local</button>
+  </section>
+</aside>
+</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="overlayTitle">🐍 Snake Game PRO</h2>
+    <p id="overlayText">Colete alimentos, complete missões, ganhe moedas e desbloqueie novas skins.</p>
+    <div class="actions"><button id="overlayMain">Começar</button><button class="secondary" id="overlaySecondary">Fechar</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+// ============================================================
+// PERFIL, PERSISTÊNCIA E CATÁLOGOS
+// ============================================================
+const $ = id => document.getElementById(id);
+const canvas = $("game");
+const ctx = canvas.getContext("2d");
+const GRID = 25, CELL = canvas.width / GRID;
+const STORAGE_KEY = "snake-ultimate-profile-v1";
+const todayKey = () => new Date().toLocaleDateString("en-CA");
+
+const skins = [
+  {id:"classic",name:"Clássica",price:0,head:"#22c55e",body:"#4ade80",desc:"O visual tradicional."},
+  {id:"ocean",name:"Oceano",price:80,head:"#38bdf8",body:"#0ea5e9",desc:"Tons de azul."},
+  {id:"fire",name:"Chamas",price:130,head:"#fb923c",body:"#ef4444",desc:"Uma cobra em chamas."},
+  {id:"royal",name:"Real",price:200,head:"#c084fc",body:"#9333ea",desc:"Visual roxo especial."},
+  {id:"gold",name:"Dourada",price:350,head:"#facc15",body:"#eab308",desc:"Uma skin de prestígio."},
+  {id:"toxic",name:"Tóxica",price:275,head:"#bef264",body:"#65a30d",desc:"Verde radioativo."}
+];
+const powerCatalog = [
+  {id:"shield",name:"Escudo",emoji:"🛡️",price:35,desc:"Bloqueia uma colisão."},
+  {id:"speed",name:"Turbo",emoji:"⚡",price:30,desc:"Aumenta a velocidade por 7 segundos."},
+  {id:"slow",name:"Lentidão",emoji:"🐢",price:25,desc:"Reduz a velocidade por 7 segundos."},
+  {id:"ghost",name:"Imortalidade",emoji:"👻",price:65,desc:"Ignora colisões por 5 segundos."}
+];
+const achievements = [
+  {id:"first",name:"Primeira refeição",desc:"Colete sua primeira comida.",emoji:"🍎",test:p=>p.totalFood>=1,reward:15},
+  {id:"score100",name:"Centenário",desc:"Faça 100 pontos em uma partida.",emoji:"💯",test:p=>p.best>=100,reward:30},
+  {id:"score500",name:"Lenda da cobra",desc:"Faça 500 pontos em uma partida.",emoji:"🐉",test:p=>p.best>=500,reward:100},
+  {id:"collector",name:"Colecionador",desc:"Colete 50 alimentos no total.",emoji:"📦",test:p=>p.totalFood>=50,reward:60},
+  {id:"campaign1",name:"A jornada começa",desc:"Conclua a primeira fase.",emoji:"🗺️",test:p=>p.campaignUnlocked>=2,reward:40},
+  {id:"rich",name:"Pequena fortuna",desc:"Acumule 500 moedas.",emoji:"💰",test:p=>p.coins>=500,reward:50},
+  {id:"poweruser",name:"Preparado para tudo",desc:"Use 10 power-ups.",emoji:"⚡",test:p=>p.powerUses>=10,reward:50}
+];
+
+function defaultProfile(){
+  return {
+    coins:50,best:0,totalFood:0,powerUses:0,campaignUnlocked:1,
+    completedStages:[],ownedSkins:["classic"],equippedSkin:"classic",
+    inventory:{shield:0,speed:0,slow:0,ghost:0},
+    achievements:[],ranking:[],playerName:"Jogador",
+    missionsDate:"",missions:{},settings:{difficulty:"normal",wallMode:"solid",soundMode:"on",gameMode:"endless"}
+  };
+}
+function loadProfile(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(!saved)return defaultProfile();
+    const base=defaultProfile();
+    return {...base,...saved,inventory:{...base.inventory,...saved.inventory},
+      settings:{...base.settings,...saved.settings}};
+  }catch(e){return defaultProfile();}
+}
+let profile=loadProfile();
+function saveProfile(){localStorage.setItem(STORAGE_KEY,JSON.stringify(profile));renderAll();}
+function notify(message){
+  const el=$("toast");el.textContent=message;el.classList.add("show");
+  clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.remove("show"),2100);
+}
+function awardCoins(amount,reason){
+  if(amount<=0)return;
+  profile.coins+=amount;notify(`+${amount} moedas · ${reason}`);saveProfile();
+}
+function currentSkin(){return skins.find(s=>s.id===profile.equippedSkin)||skins[0];}
+
+// ============================================================
+// MISSÕES DIÁRIAS
+// ============================================================
+function ensureDailyMissions(){
+  const key=todayKey();
+  if(profile.missionsDate===key && Object.keys(profile.missions).length)return;
+  profile.missionsDate=key;
+  profile.missions={
+    food:{progress:0,target:12,reward:35,done:false,name:"Apetite de cobra",desc:"Colete 12 comidas."},
+    score:{progress:0,target:100,reward:45,done:false,name:"Pontuação crescente",desc:"Acumule 100 pontos em partidas."},
+    power:{progress:0,target:2,reward:30,done:false,name:" arsenal especial",desc:"Use 2 power-ups."}
+  };
+  saveProfile();
+}
+function progressMission(id,amount=1){
+  const m=profile.missions[id];if(!m||m.done)return;
+  m.progress=Math.min(m.target,m.progress+amount);
+  if(m.progress>=m.target){m.done=true;profile.coins+=m.reward;notify(`Missão concluída: +${m.reward} moedas!`);}
+  saveProfile();
+}
+function renderMissions(){
+  $("missionList").innerHTML="";
+  Object.entries(profile.missions).forEach(([id,m])=>{
+    const pct=Math.min(100,m.progress/m.target*100);
+    const el=document.createElement("div");el.className="card";
+    el.innerHTML=`<div class="row"><strong>${m.name}</strong><strong>${m.done?"✅":`🪙 ${m.reward}`}</strong></div><p>${m.desc}</p><div class="progress"><span style="width:${pct}%"></span></div><p>${m.progress}/${m.target} ${m.done?"· Concluída":""}</p>`;
+    $("missionList").appendChild(el);
+  });
+}
+
+// ============================================================
+// CONQUISTAS
+// ============================================================
+function checkAchievements(){
+  achievements.forEach(a=>{
+    if(!profile.achievements.includes(a.id)&&a.test(profile)){
+      profile.achievements.push(a.id);profile.coins+=a.reward;
+      notify(`${a.emoji} Conquista: ${a.name} (+${a.reward} moedas)`);
+    }
+  });
+}
+function renderAchievements(){
+  $("achievementList").innerHTML="";
+  achievements.forEach(a=>{
+    const unlocked=profile.achievements.includes(a.id);
+    const el=document.createElement("div");el.className="item"+(unlocked?"":" locked");
+    el.innerHTML=`<div class="row"><span class="badge">${a.emoji}</span><div class="desc"><strong>${a.name}</strong><small>${a.desc}</small></div></div><strong>${unlocked?"✅":`🪙 ${a.reward}`}</strong>`;
+    $("achievementList").appendChild(el);
+  });
+}
+
+// ============================================================
+// LOJA: SKINS E POWER-UPS
+// ============================================================
+function renderShop(){
+  $("skinList").innerHTML="";
+  skins.forEach(s=>{
+    const owned=profile.ownedSkins.includes(s.id),equipped=profile.equippedSkin===s.id;
+    const el=document.createElement("div");el.className="item";
+    el.innerHTML=`<div class="row"><span class="badge">🐍</span><div class="desc"><strong>${s.name}</strong><small>${s.desc}</small></div></div><button ${equipped?"disabled":""}>${equipped?"Equipado":owned?"Equipar":`🪙 ${s.price}`}</button>`;
+    el.querySelector("button").addEventListener("click",()=>{
+      if(owned){profile.equippedSkin=s.id;saveProfile();notify(`${s.name} equipada!`);}
+      else if(profile.coins>=s.price){profile.coins-=s.price;profile.ownedSkins.push(s.id);profile.equippedSkin=s.id;saveProfile();notify("Skin comprada e equipada!");}
+      else notify("Moedas insuficientes.");
+    });
+    $("skinList").appendChild(el);
+  });
+  $("powerShop").innerHTML="";
+  powerCatalog.forEach(p=>{
+    const el=document.createElement("div");el.className="item";
+    el.innerHTML=`<div class="row"><span class="badge">${p.emoji}</span><div class="desc"><strong>${p.name} · ${profile.inventory[p.id]}x</strong><small>${p.desc}</small></div></div><button>🪙 ${p.price}</button>`;
+    el.querySelector("button").addEventListener("click",()=>{
+      if(profile.coins<p.price){notify("Moedas insuficientes.");return;}
+      profile.coins-=p.price;profile.inventory[p.id]++;saveProfile();notify(`${p.name} comprado!`);
+    });
+    $("powerShop").appendChild(el);
+  });
+}
+
+// ============================================================
+// RANKING LOCAL
+// ============================================================
+function renderRanking(){
+  $("playerName").value=profile.playerName;
+  $("rankingList").innerHTML="";
+  if(!profile.ranking.length){$("rankingList").innerHTML='<div class="empty">Nenhuma pontuação registrada ainda.</div>';return;}
+  profile.ranking.slice(0,10).forEach((r,i)=>{
+    const el=document.createElement("div");el.className="item";
+    el.innerHTML=`<strong>${i+1}. ${escapeHTML(r.name)}</strong><strong>${r.score} pts</strong>`;
+    $("rankingList").appendChild(el);
+  });
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("saveName").addEventListener("click",()=>{
+  profile.playerName=$("playerName").value.trim().slice(0,16)||"Jogador";saveProfile();notify("Nome atualizado.");
+});
+function recordScore(){
+  profile.ranking.push({name:profile.playerName,score,when:Date.now()});
+  profile.ranking.sort((a,b)=>b.score-a.score);
+  profile.ranking=profile.ranking.slice(0,10);
+}
+
+// ============================================================
+// CAMPANHA
+// ============================================================
+const stages=[
+  {target:5,obstacles:0,speed:1,title:"Primeiros passos",desc:"Colete 5 alimentos. Aprenda o ritmo."},
+  {target:8,obstacles:4,speed:1.08,title:"Terreno perigoso",desc:"Colete 8 alimentos desviando dos obstáculos."},
+  {target:10,obstacles:7,speed:1.15,title:"Corredor veloz",desc:"Colete 10 alimentos em velocidade maior."},
+  {target:12,obstacles:11,speed:1.22,title:"Labirinto",desc:"Sobreviva ao campo de obstáculos."},
+  {target:15,obstacles:15,speed:1.3,title:"Desafio final",desc:"Complete 15 coletas para vencer a campanha."}
+];
+function renderCampaign(){
+  const n=profile.campaignUnlocked;
+  if(n>stages.length){$("campaignInfo").innerHTML="<strong>🏆 Campanha concluída!</strong><p>Você dominou todas as fases.</p>";$("campaignBtn").textContent="Jogar novamente";return;}
+  const s=stages[n-1];
+  $("campaignInfo").innerHTML=`<strong>Fase ${n}: ${s.title}</strong><p>${s.desc}</p><p>Meta: ${s.target} alimentos · Obstáculos: ${s.obstacles}</p><p>Fases concluídas: ${profile.completedStages.length}/${stages.length}</p>`;
+  $("campaignBtn").textContent=`Iniciar fase ${n}`;
+}
+$("campaignBtn").addEventListener("click",()=>{
+  $("gameMode").value="campaign";profile.settings.gameMode="campaign";startGame();
+});
+
+// ============================================================
+// ESTADO E MECÂNICA DO JOGO
+// ============================================================
+let snake=[],food=null,powerFood=null,obstacles=[];
+let direction={x:1,y:0},queuedDirection={x:1,y:0};
+let score=0,runCoins=0,foodCount=0,stageNumber=1;
+let state="menu",raf=0,lastTime=0,accumulator=0;
+let activeEffects={shield:0,speed:0,slow:0,ghost:0};
+let particles=[],audioCtx=null,runSpeedFactor=1;
+const baseSpeeds={easy:155,normal:115,hard:82};
+
+function randomFree(){
+  const free=[];
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){
+    const used=snake.some(p=>p.x===x&&p.y===y)||
+      obstacles.some(p=>p.x===x&&p.y===y)||
+      (food&&food.x===x&&food.y===y)||
+      (powerFood&&powerFood.x===x&&powerFood.y===y);
+    if(!used)free.push({x,y});
+  }
+  return free.length?free[Math.floor(Math.random()*free.length)]:null;
+}
+function spawnFood(){food=randomFree();if(!food)winGame();}
+function spawnPowerFood(){
+  if(powerFood||Math.random()>.24)return;
+  const pos=randomFree();if(!pos)return;
+  const types=["shield","speed","slow","ghost"];
+  powerFood={...pos,type:types[Math.floor(Math.random()*types.length)],expires:performance.now()+8500};
+}
+function buildObstacles(amount){
+  for(let i=0;i<amount;i++){const p=randomFree();if(p)obstacles.push(p);}
+}
+function initGame(){
+  snake=[{x:12,y:12},{x:11,y:12},{x:10,y:12}];
+  direction={x:1,y:0};queuedDirection={x:1,y:0};
+  score=0;runCoins=0;foodCount=0;particles=[];powerFood=null;obstacles=[];
+  activeEffects={shield:0,speed:0,slow:0,ghost:0};
+  runSpeedFactor=1;
+  const campaign=$("gameMode").value==="campaign";
+  stageNumber=campaign?Math.min(profile.campaignUnlocked,stages.length):0;
+  if(campaign)buildObstacles(stages[stageNumber-1].obstacles);
+  spawnFood();updateHUD();draw();
+}
+function updateHUD(){
+  $("score").textContent=score;$("best").textContent=profile.best;
+  $("stage").textContent=stageNumber?`${stageNumber}/${stages.length}`:"Livre";
+  $("runCoins").textContent=runCoins;
+  $("coins").textContent=profile.coins;$("profileLevel").textContent=1+Math.floor(profile.totalFood/25);
+  const active=Object.entries(activeEffects).filter(([,t])=>t>performance.now());
+  $("effects").textContent=active.length?active.map(([k,t])=>`${({shield:"🛡️",speed:"⚡",slow:"🐢",ghost:"👻"})[k]} ${Math.ceil((t-performance.now())/1000)}s`).join(" · "):"Nenhum";
+  $("effectBar").style.width=active.length?"100%":"0%";
+}
+function playTone(freq=440,duration=.09){
+  if($("soundMode").value==="off")return;
+  try{
+    audioCtx ||= new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);o.frequency.value=freq;
+    g.gain.setValueAtTime(.08,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);
+    o.start();o.stop(audioCtx.currentTime+duration);
+  }catch(e){}
+}
+function addParticles(x,y,color){
+  for(let i=0;i<9;i++)particles.push({x:x*CELL+CELL/2,y:y*CELL+CELL/2,
+    vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:1,color});
+}
+function usePower(type){
+  const now=performance.now();
+  if(type==="shield")activeEffects.shield=Infinity;
+  else if(type==="speed")activeEffects.speed=now+7000;
+  else if(type==="slow")activeEffects.slow=now+7000;
+  else if(type==="ghost")activeEffects.ghost=now+5000;
+  profile.powerUses++;progressMission("power");checkAchievements();saveProfile();
+  notify(({shield:"Escudo ativado!",speed:"Turbo ativado!",slow:"Lentidão ativada!",ghost:"Imortalidade ativada!"})[type]);
+  playTone(700,.18);
+}
+function activateInventoryPower(){
+  const order=["shield","ghost","speed","slow"];
+  const type=order.find(k=>profile.inventory[k]>0);
+  if(!type){notify("Você não possui power-ups. Compre na loja.");return;}
+  profile.inventory[type]--;usePower(type);
+}
+function collectFood(){
+  foodCount++;profile.totalFood++;progressMission("food");
+  const points=10;score+=points;
+  runCoins+=2;profile.coins+=2;
+  addParticles(snake[0].x,snake[0].y,"#fb6575");
+  spawnFood();spawnPowerFood();checkCampaignProgress();checkAchievements();
+  if(score>profile.best)profile.best=score;
+  progressMission("score",points);
+  playTone(540,.08);saveProfile();
+}
+function collectPower(){
+  const type=powerFood.type;powerFood=null;usePower(type);
+  runCoins+=5;profile.coins+=5;addParticles(snake[0].x,snake[0].y,"#f6c453");saveProfile();
+}
+function collision(){
+  const h=snake[0];
+  const ghost=activeEffects.ghost>performance.now();
+  const shield=activeEffects.shield===Infinity;
+  const hitWall=$("wallMode").value==="solid"&&(h.x<0||h.y<0||h.x>=GRID||h.y>=GRID);
+  const hitBody=snake.slice(1).some(p=>p.x===h.x&&p.y===h.y);
+  const hitObstacle=obstacles.some(p=>p.x===h.x&&p.y===h.y);
+  if(!(hitWall||hitBody||hitObstacle)||ghost)return false;
+  if(shield){activeEffects.shield=0;activeEffects.ghost=performance.now()+900;if(hitWall){h.x=(h.x+GRID)%GRID;h.y=(h.y+GRID)%GRID;}notify("Escudo absorveu a colisão!");playTone(260,.2);return false;}
+  return true;
+}
+function update(){
+  direction=queuedDirection;
+  const h={x:snake[0].x+direction.x,y:snake[0].y+direction.y};
+  if($("wallMode").value==="wrap"){h.x=(h.x+GRID)%GRID;h.y=(h.y+GRID)%GRID;}
+  snake.unshift(h);
+  if(collision()){snake.shift();endGame();return;}
+  const ate=food&&h.x===food.x&&h.y===food.y;
+  const gotPower=powerFood&&h.x===powerFood.x&&h.y===powerFood.y;
+  if(ate){collectFood();}
+  else if(gotPower){collectPower();}
+  else snake.pop();
+  if(powerFood&&performance.now()>powerFood.expires)powerFood=null;
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=.045;});
+  particles=particles.filter(p=>p.life>0);
+  updateHUD();
+  if(stageNumber&&foodCount>=stages[stageNumber-1].target)completeStage();
+}
+function gameSpeed(){
+  let speed=baseSpeeds[$("difficulty").value]||115;
+  if(stageNumber)speed/=stages[stageNumber-1].speed;
+  if(activeEffects.speed>performance.now())speed*=.65;
+  if(activeEffects.slow>performance.now())speed*=1.55;
+  return Math.max(42,speed);
+}
+function loop(time){
+  if(state!=="playing")return;
+  if(!lastTime)lastTime=time;
+  accumulator+=Math.min(time-lastTime,100);lastTime=time;
+  const step=gameSpeed();
+  while(accumulator>=step&&state==="playing"){update();accumulator-=step;}
+  draw();updateHUD();
+  if(state==="playing")raf=requestAnimationFrame(loop);
+}
+
+// ============================================================
+// RENDERIZAÇÃO CANVAS
+// ============================================================
+function roundedCell(x,y,color,r=5){
+  ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x*CELL+2,y*CELL+2,CELL-4,CELL-4,r);ctx.fill();
+}
+function draw(){
+  ctx.fillStyle="#101e30";ctx.fillRect(0,0,500,500);
+  ctx.strokeStyle="rgba(255,255,255,.035)";ctx.lineWidth=1;
+  for(let i=0;i<=GRID;i++){
+    ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,500);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,i*CELL);ctx.lineTo(500,i*CELL);ctx.stroke();
+  }
+  obstacles.forEach(p=>roundedCell(p.x,p.y,"#718096",3));
+  if(food){roundedCell(food.x,food.y,"#fb6575",10);}
+  if(powerFood){
+    roundedCell(powerFood.x,powerFood.y,"#f6c453",10);
+    ctx.fillStyle="#352500";ctx.font="bold 13px Arial";ctx.textAlign="center";
+    ctx.fillText(({shield:"S",speed:"⚡",slow:"T",ghost:"G"})[powerFood.type],powerFood.x*CELL+CELL/2,powerFood.y*CELL+17);
+  }
+  const skin=currentSkin();
+  snake.forEach((p,i)=>{
+    roundedCell(p.x,p.y,i===0?skin.head:skin.body,i===0?8:5);
+    if(i===0){
+      ctx.fillStyle="#071b16";
+      const cx=p.x*CELL+CELL/2,cy=p.y*CELL+CELL/2;
+      const ox=direction.x*4,oy=direction.y*4;
+      ctx.beginPath();ctx.arc(cx+ox-direction.y*4,cy+oy+direction.x*4,2,0,Math.PI*2);
+      ctx.arc(cx+ox+direction.y*4,cy+oy-direction.x*4,2,0,Math.PI*2);ctx.fill();
+    }
+  });
+  particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
+  ctx.globalAlpha=1;
+}
+
+// ============================================================
+// FLUXO DE PARTIDA E CAMPANHA
+// ============================================================
+function showOverlay(title,message,mainText,mainAction,secondaryText="Fechar",secondaryAction=hideOverlay){
+  $("overlayTitle").textContent=title;$("overlayText").textContent=message;
+  $("overlayMain").textContent=mainText;$("overlaySecondary").textContent=secondaryText;
+  $("overlayMain").onclick=mainAction;$("overlaySecondary").onclick=secondaryAction;
+  $("overlay").classList.remove("hidden");
+}
+function hideOverlay(){$("overlay").classList.add("hidden");}
+function startGame(){
+  cancelAnimationFrame(raf);hideOverlay();initGame();state="playing";lastTime=0;accumulator=0;raf=requestAnimationFrame(loop);
+}
+function pauseGame(){
+  if(state==="playing"){state="paused";cancelAnimationFrame(raf);showOverlay("⏸ Pausado","Sua partida está pausada. Seu progresso atual foi preservado.","Continuar",()=>{hideOverlay();state="playing";lastTime=0;raf=requestAnimationFrame(loop);},"Reiniciar",startGame);}
+}
+function endGame(){
+  state="over";cancelAnimationFrame(raf);
+  if(score>profile.best)profile.best=score;
+  recordScore();
+  progressMission("score",Math.max(0,score));
+  profile.coins+=runCoins;
+  checkAchievements();saveProfile();
+  showOverlay("💀 Fim de jogo",`Pontuação: ${score} · Moedas ganhas: ${runCoins}. Tente novamente e supere seu recorde.`,"Jogar novamente",startGame,"Menu",()=>{hideOverlay();state="menu";});
+}
+function completeStage(){
+  if(state!=="playing")return;
+  state="stageComplete";cancelAnimationFrame(raf);
+  const reward=60+stageNumber*20;
+  profile.coins+=reward;profile.completedStages=Array.from(new Set([...profile.completedStages,stageNumber]));
+  profile.campaignUnlocked=Math.max(profile.campaignUnlocked,Math.min(stages.length+1,stageNumber+1));
+  checkAchievements();saveProfile();renderCampaign();
+  showOverlay("🏆 Fase concluída!",`Você completou a fase ${stageNumber} e recebeu ${reward} moedas.`,stageNumber<stages.length?"Próxima fase":"Finalizar campanha",()=>{
+    hideOverlay();
+    if(stageNumber<stages.length){profile.campaignUnlocked=Math.max(profile.campaignUnlocked,stageNumber+1);saveProfile();startGame();}
+    else{state="menu";showOverlay("👑 Campanha finalizada","Você concluiu todas as fases! Continue jogando no modo infinito.","Jogar infinito",()=>{$("gameMode").value="endless";profile.settings.gameMode="endless";saveProfile();startGame();},"Fechar",hideOverlay);}
+  },"Menu",()=>{hideOverlay();state="menu";});
+}
+function checkCampaignProgress(){
+  // A fase avança ao atingir a meta de alimentos coletados nesta partida.
+}
+function resetRun(){startGame();}
+
+// ============================================================
+// INPUT: TECLADO, TOQUE E BOTÕES
+// ============================================================
+function setDirection(x,y){
+  if(state!=="playing")return;
+  if(x===-direction.x&&y===-direction.y)return;
+  queuedDirection={x,y};
+}
+const keys={ArrowUp:[0,-1],w:[0,-1],ArrowDown:[0,1],s:[0,1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]};
+document.addEventListener("keydown",e=>{
+  if(keys[e.key]){e.preventDefault();setDirection(...keys[e.key]);}
+  const k=e.key.toLowerCase();
+  if(k==="p"||k==="escape")pauseGame();
+  if(k==="r")startGame();
+  if(k===" ")activateInventoryPower();
+});
+document.querySelectorAll("[data-dir]").forEach(btn=>btn.addEventListener("click",()=>{
+  const dirs={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};setDirection(...dirs[btn.dataset.dir]);
+}));
+let touchX=0,touchY=0;
+canvas.addEventListener("touchstart",e=>{touchX=e.changedTouches[0].clientX;touchY=e.changedTouches[0].clientY;},{passive:true});
+canvas.addEventListener("touchend",e=>{
+  const dx=e.changedTouches[0].clientX-touchX,dy=e.changedTouches[0].clientY-touchY;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;
+  if(Math.abs(dx)>Math.abs(dy))setDirection(dx>0?1:-1,0);else setDirection(0,dy>0?1:-1);
+},{passive:true});
+$("startBtn").onclick=startGame;$("pauseBtn").onclick=pauseGame;$("restartBtn").onclick=startGame;
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")pauseGame();});
+
+// ============================================================
+// NAVEGAÇÃO ENTRE PAINÉIS
+// ============================================================
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b===btn));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===btn.dataset.tab));
+}));
+function renderAll(){
+  $("coins").textContent=profile.coins;$("best").textContent=profile.best;
+  $("profileLevel").textContent=1+Math.floor(profile.totalFood/25);
+  renderMissions();renderShop();renderAchievements();renderRanking();renderCampaign();updateHUD();
+}
+
+// ============================================================
+// CONFIGURAÇÕES E RESET
+// ============================================================
+["difficulty","wallMode","soundMode","gameMode"].forEach(id=>{
+  $(id).value=profile.settings[id];
+  $(id).addEventListener("change",()=>{profile.settings[id]=$(id).value;saveProfile();});
+});
+$("resetData").addEventListener("click",()=>{
+  if(!confirm("Isso apagará moedas, skins, conquistas, missões e ranking deste navegador. Continuar?"))return;
+  localStorage.removeItem(STORAGE_KEY);profile=defaultProfile();ensureDailyMissions();saveProfile();initGame();state="menu";notify("Progresso local reiniciado.");
+});
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+ensureDailyMissions();
+renderAll();
+initGame();
+showOverlay("🐍 Snake Game PRO","Colete alimentos, use power-ups, complete missões, conquiste medalhas e desbloqueie skins. Dica: espaço ativa um power-up do inventário.","Começar",startGame,"Ver loja",()=>{
+  hideOverlay();document.querySelector('[data-tab="shop"]').click();
+});
+</script>
+</body>
+</html>
